@@ -1,0 +1,36 @@
+CREATE OR REPLACE FUNCTION find_future_working_day(x INTEGER)
+RETURN DATE
+AS
+    DECLARE v_future_date        DATE;
+            v_working_day_index  INTEGER;
+            v_future_date_string VARCHAR(10);
+            v_month              holidays.month%TYPE;
+            v_year               holidays.year%TYPE;
+BEGIN
+    IF (x < 0) 
+    THEN
+        dbms_output.put_line('Input number must be positive');
+    END IF;
+        
+    SELECT INSTR(holiday_list, 'W', 1, x)/* Get the x occurance of an working day in the holiday_list */
+    INTO v_working_day_index
+    FROM holidays
+    WHERE month = '01'
+    AND year = '2020';
+    
+    SELECT month
+    INTO v_month
+    FROM holidays
+    WHERE month = '01';
+    
+    SELECT year
+    INTO v_year
+    FROM holidays
+    WHERE year = '2020';
+        
+    v_future_date_string := TO_CHAR(working_day_index) + '/' + v_month + '/' + v_year;
+    v_future_date := TO_DATE(v_future_date_string, 'DD/MM/YYYY');
+    
+    RETURN v_future_date; 
+END;
+
