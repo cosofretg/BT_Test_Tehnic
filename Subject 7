@@ -1,0 +1,45 @@
+create or replace PROCEDURE update_accounts_account_number
+(
+    v_return OUT VARCHAR(10):='OK'
+)
+AS
+BEGIN
+   MERGE INTO accounts p_dest
+         USING accounts p_source
+   ON (p_dest.id = p_source.id)
+   WHEN MATCHED THEN
+        UPDATE SET dest.account_number = p_source.account_number
+   WHEN NOT MATCHED THEN
+        INSERT 
+        (
+            id, 
+            account_number, 
+            currency, iban, 
+            account_class_id, 
+            available_balance, 
+            status, 
+            customer_id, 
+            open_branch, 
+            inserted_date, 
+            inserted_by
+        )
+        VALUES 
+        (
+            p_source.id, 
+            p_source.account_number, 
+            p_source.currency, 
+            p_source.iban, 
+            p_source.account_class_id, 
+            p_source.available_balance, 
+            p_source.status, 
+            p_source.customer_id, 
+            p_source.open_branch, 
+            p_source.inserted_date, 
+            p_source.inserted_by
+        )
+        DBMS_OUTPUT.put_line(v_out);
+        RETURN;
+    EXCEPTION        
+    WHEN OTHERS THEN
+        raise_application_error(-20001,'An error was encountered - '||SQLCODE||' -ERROR- '||SQLERRM);
+END;
