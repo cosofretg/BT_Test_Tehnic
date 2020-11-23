@@ -1,0 +1,42 @@
+-- Subject 1
+
+SELECT cust.first_name       AS first_name,
+       cust.last_name        AS last_name,
+       ca.id                 AS card_id,
+       ca.card_number        AS card_number,
+       ac1.account_class_id  AS account_class_id,
+       tran.amount           AS amount,
+       tran.debit_acc_id     AS debit_acc_id,
+       ac1.available_balance AS debit_amount,
+       tran.credit_acc_id    AS credit_acc_id,     
+       ac2.available_balance AS credit_amount
+FROM transactions tran
+INNER JOIN accounts ac1 ON tran.debit_acc_id = ac1.id
+INNER JOIN accounts ac2 ON tran.credit_acc_id = ac2.id
+INNER JOIN customers cust ON cust.id = ac1.customer_id
+INNER JOIN cards ca ON ca.customer_id = cust.id
+WHERE tran.debit_acc_id IN 
+(
+    SELECT more_than_10_transactions.debit_acc_id
+    FROM 
+    (
+        SELECT tran.debit_acc_id,
+               COUNT(tran.debit_acc_id),
+               amount
+        FROM transactions tran
+        WHERE tran.amount = 10
+        GROUP BY tran.debit_acc_id,
+                amount
+        HAVING COUNT(tran.debit_acc_id) > 10       
+    ) more_than_10_transactions
+)
+AND cust.first_name = 'FirstName1' /* Here to introduce the customer details, first name */
+AND cust.last_name = 'LastName1'   /* Here to introduce the customer details, last name */ 
+ORDER BY cust.first_name,
+         cust.last_name
+
+
+         
+         
+
+
