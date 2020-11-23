@@ -1,0 +1,44 @@
+WITH last_transaction AS
+(
+    SELECT cust.id                               AS customer_id,
+           MAX(tran.inserted_date)               AS transaction_date,
+           is_leap_year(MAX(tran.inserted_date)) AS is_leap_year
+    FROM transactions tran
+    INNER JOIN accounts ac ON tran.debit_acc_id = ac.id
+    INNER JOIN customers cust ON cust.id = ac.customer_id
+    GROUP BY cust.id
+    ORDER BY cust.id ASC
+),
+second_maximum_transaction AS
+(
+    SELECT cust.id      AS customer_id,
+           tran.amount  AS transaction_amount,
+           ROW_NUMBER() OVER (PARTITION BY cust.id ORDER BY tran.amount DESC) row_number
+    FROM transactions tran
+    INNER JOIN accounts ac ON tran.debit_acc_id = ac.id
+    INNER JOIN customers cust ON cust.id = ac.customer_id
+    ORDER BY cust.id ASC, tran.amount DESC
+)
+SELECT smt.customer_id, 
+       smt.transaction_amount
+FROM second_maximum_transaction smt
+WHERE  smt.row_number = 2
+AND smt.customer_id NOT IN (SELECT lt.customer_id FROM last_transaction lt WHERE lt.is_leap_year = 1)
+
+
+-- Auxiliar function to check if a given year is leap or not
+/*CREATE OR REPLACE FUNCTION is_leap_year(p_date DATE) 
+RETURN INTEGER
+AS
+  v_result INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO v_result
+  FROM dual
+  WHERE TO_CHAR(LAST_DAY(TRUNC(p_date,'YEAR')+31),'DD')='29';
+
+  RETURN v_result;
+END;
+
+This function returns 1 if year from p_date is leap and 0 if not
+
+*/
