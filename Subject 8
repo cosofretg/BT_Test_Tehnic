@@ -1,0 +1,67 @@
+CREATE OR REPLACE PROCEDURE update_accounts_available_balance
+(
+    v_out OUT VARCHAR(4):='OK'
+)
+AS
+BEGIN
+    MERGE INTO accounts p_dest
+    USING
+    (
+        WITH debit_amounts AS
+        (
+            SELECT tran.debit_acc_id,
+                   ac.available_balance,
+                   SUM(tran.amount) AS debit_amount
+            FROM transactions tran
+            INNER JOIN accounts ac ON ac.id = tran.debit_acc_id
+            GROUP BY tran.debit_acc_id,
+                     ac.available_balance
+            ORDER BY debit_acc_id ASC
+        ),
+        credit_amounts AS
+        (
+            SELECT tran.credit_acc_id,
+                   ac.available_balance,
+                   SUM(tran.amount) AS credit_amount
+            FROM transactions tran
+            INNER JOIN accounts ac ON ac.id = tran.credit_acc_id
+            GROUP BY tran.credit_acc_id,
+                     ac.available_balance
+            ORDER BY credit_acc_id ASC
+        ),
+        balance_after_debit_table AS
+        (
+            SELECT da.debit_acc_id,
+                   da.available_balance,
+                   da.debit_amount,
+                   ca.credit_acc_id,
+                   ca.available_balance,
+                   ca.credit_amount,
+                   (da.available_balance - da.debit_amount) AS balance_after_debit
+            FROM debit_amounts da
+            INNER JOIN credit_amounts ca ON ca.credit_acc_id = da.debit_acc_id
+        )
+        SELECT bad.debit_acc_id,
+               bad.debit_amount,
+               bad.credit_acc_id,
+               bad.credit_amount,
+              (bad.balance_after_debit + bad.credit_amount) AS final_balance
+        FROM balance_after_debit_table bad 
+    ) p_source 
+    ON (p_dest.id = p_source.debit_acc_id) /* Or we can do ON(p_dest.id = p_source.credr_acc_id) - The result will be the same */
+    WHEN MATCHED THEN
+        UPDATE SET p_dest.available_balance = p_source.final_balance
+        DBMS_OUTPUT.put_line(v_out); 
+        RETURN;
+    EXCEPTION        
+    WHEN OTHERS THEN
+        raise_application_error(-20001,'An error was encountered - '||SQLCODE||' -ERROR- '||SQLERRM);     
+END;
+
+
+
+
+
+
+
+
