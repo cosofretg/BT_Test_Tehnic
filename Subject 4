@@ -1,0 +1,20 @@
+CREATE OR REPLACE PROCEDURE update_customer_details
+(
+	   p_id             IN customers.id%TYPE,
+	   p_first_name     IN customers.first_name%TYPE,
+     p_last_name      IN customers.last_name%TYPE,
+     p_date_of_birth  IN customers.date_of_birth%TYPE,
+     p_status         IN customers.status%TYPE,
+     p_open_branch_id IN customers.open_branch_id%TYPE
+)      
+IS
+BEGIN
+    UPDATE Customers 
+    SET first_name = p_first_name,
+        last_name = p_last_name,
+        date_of_birth = p_date_of_birth,
+        status = p_status,
+        open_branch_id = p_open_branch_id
+    WHERE id = p_id;
+    COMMIT;
+END;
