@@ -1,0 +1,10 @@
+CREATE OR REPLACE TRIGGER TRIGGER_SET_STATUS_ACCOUNT_CLOSED 
+AFTER UPDATE ON test1.accounts
+BEGIN
+    IF (accounts.id = :id AND accounts.available_balance <= 0)
+    THEN
+        UPDATE accounts
+        SET status = 'CLOSED'
+        WHERE id = :id
+    END IF;
+END;
