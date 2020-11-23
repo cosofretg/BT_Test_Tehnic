@@ -1,0 +1,24 @@
+-- Subject 2
+
+SELECT bran2.id               AS child_branch_id,
+       bran2.long_description AS child_branch_description,
+       bran2.address          AS child_branch_address,
+       bran1.id               AS parent_branch_id,
+       bran1.address          AS parent_branch_address,
+       bran1.long_description AS parent_branch_description,
+       CASE
+            WHEN any_transaction.transaction_branch_id IS NOT NULL THEN 'YES'
+            ELSE 'NO'
+       END AS any_transaction_registered
+FROM branches bran1
+LEFT JOIN branches bran2 ON bran2.parent_branch_id = bran1.id
+INNER JOIN 
+(
+    SELECT DISTINCT transaction_branch_id
+    FROM transactions tran
+    INNER JOIN branches bran ON bran.id = tran.transaction_branch_id
+) any_transaction ON any_transaction.transaction_branch_id = bran1.id
+WHERE bran1.id = 5  /* Here to introduce the branch_id */
+
+
+
